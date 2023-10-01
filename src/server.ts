@@ -1,17 +1,14 @@
-// Import the framework and instantiate it
-import Fastify from 'fastify'
-const fastify = Fastify({
-  logger: true
-})
+import fastify from 'fastify'
+import userRoutes from './routes/user.routes'
 
-// Declare a route
-fastify.get('/', async function handler (request, reply) {
-  return { hello: 'world' }
-})
+const server = fastify()
 
-// Run the server!
-try {
-  fastify.listen({ port: 3000 })
-} catch (err) {
-  fastify.log.error(err)
-}
+userRoutes(server)
+
+server.listen({ port: 8080 }, (err, address) => {
+  if (err) {
+    console.error(err)
+    process.exit(1)
+  }
+  console.log(`Server listening at ${address}`)
+})
