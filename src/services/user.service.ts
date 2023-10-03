@@ -1,33 +1,63 @@
-// src/services/user.service.ts
+import {PrismaClient, User } from '@prisma/client';
 
-// Exemplo de um array simulando um banco de dados temporário
-const usersDB: User[] = [{
-    id: 2,
-    username: 'Mendes',
-    email: 'vanei@gamsil'
-}];
-
-export interface User {
-  id: number;
-  username: string;
-  email: string;
-}
+const prisma = new PrismaClient();
 
 export class UserService {
-  private nextId = 1;
 
-  getAllUsers(): User[] {
-    return usersDB;
+  async getAllUsers() {
+    const date = await prisma.user.findMany({
+      include:{
+        roles:{
+          include:{
+            permissions:true
+          }
+        }
+      }
+    });
+    return date
   }
 
-  getUserById(id: number): User | undefined {
-    return usersDB.find((user) => user.id === id);
+  async getUserById(id: number) {
+
+    const date = await prisma.user.findFirst({
+      where: {id},
+    });
+
+    return date
   }
 
-  createUser(user: User): User {
-    const newUser = { ...user, id: this.nextId++ };
-    usersDB.push(newUser);
-    return newUser;
+  async createUser(user: User) {
+    try{
+      typeof(user.rolesId) == "string" ? user.rolesId = Number(user.rolesId) : user.rolesId
+      user.rolesId ? user.rolesId : user.rolesId = 1
+
+
+      const existingUser = await prisma.user.findFirst({
+        where: {email: user.email },
+      })
+
+      if (existingUser) return "Usuário já existe"
+
+      const newUser =  await prisma.user.create({
+        data:{
+          name: user.name,
+          latsName: user.latsName,
+          email: user.email,
+          password: user.password,
+          roles: {
+            connect: {
+              id: user.rolesId
+            }
+          }
+        }
+      })
+      
+      console.log(newUser)
+      return newUser
+    }catch(err){
+      console.log(err)
+    }
   }
+
 }
 
